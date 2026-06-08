@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -391,6 +391,558 @@
     });
 
     window.addEventListener("beforeunload", closeSession);
+    loadSession();
+    hydrateSession();
+  </script>
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ad Snipper Assistant</title>
+  <style>
+    :root {
+      --brand: #1766FF;
+      --brand-dark: #0F4ED8;
+      --navy: #0D1424;
+      --text: #111827;
+      --muted: #667085;
+      --line: #DCE6F8;
+      --soft: #F3F7FF;
+      --bot: #EAF2FF;
+      --success: #12D690;
+      --white: #FFFFFF;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(23, 102, 255, 0.13), transparent 34%),
+        linear-gradient(180deg, #F8FBFF 0%, #EEF4FF 100%);
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      padding: 18px;
+    }
+
+    .chatbox {
+      width: min(430px, 100%);
+      height: min(720px, calc(100vh - 36px));
+      min-height: 600px;
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      overflow: hidden;
+      box-shadow: 0 28px 80px rgba(15, 23, 42, 0.18);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-header {
+      background:
+        radial-gradient(circle at top right, rgba(255, 255, 255, 0.20), transparent 36%),
+        linear-gradient(135deg, var(--brand) 0%, var(--brand-dark) 100%);
+      color: var(--white);
+      padding: 18px 20px;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.16);
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+    }
+
+    .chat-header strong {
+      display: block;
+      font-size: 16px;
+      line-height: 1.1;
+    }
+
+    .chat-header span {
+      display: block;
+      margin-top: 4px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.82);
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 14px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.86);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--success);
+      box-shadow: 0 0 0 4px rgba(18, 214, 144, 0.18);
+    }
+
+    .messages {
+      flex: 1;
+      padding: 18px;
+      background:
+        linear-gradient(180deg, #FFFFFF 0%, #F8FBFF 100%);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scroll-behavior: smooth;
+    }
+
+    .msg {
+      max-width: 86%;
+      padding: 12px 14px;
+      border-radius: 18px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      font-size: 14px;
+      word-break: break-word;
+    }
+
+    .msg.bot {
+      align-self: flex-start;
+      background: var(--bot);
+      color: #15366F;
+      border-top-left-radius: 7px;
+    }
+
+    .msg.user {
+      align-self: flex-end;
+      background: var(--brand);
+      color: var(--white);
+      border-top-right-radius: 7px;
+    }
+
+    .form,
+    .composer {
+      padding: 16px;
+      border-top: 1px solid var(--line);
+      background: var(--white);
+    }
+
+    .form input,
+    .composer input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 10px;
+      font: inherit;
+      color: var(--text);
+      outline: none;
+      background: #FFFFFF;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .form input:focus,
+    .composer input:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 4px rgba(23, 102, 255, 0.10);
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .form button,
+    .composer button {
+      border: 0;
+      border-radius: 16px;
+      padding: 14px 18px;
+      font-weight: 800;
+      background: var(--brand);
+      color: var(--white);
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .form button:hover,
+    .composer button:hover,
+    .cta-btn:hover {
+      transform: translateY(-1px);
+      background: var(--brand-dark);
+    }
+
+    .form button {
+      width: 100%;
+    }
+
+    .composer-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+    }
+
+    .composer-row input {
+      margin-bottom: 0;
+    }
+
+    .composer-row button {
+      min-width: 92px;
+    }
+
+    .muted {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 9px;
+      text-align: center;
+    }
+
+    .cta-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .cta-btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      background: var(--brand);
+      color: var(--white);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .cta-btn.secondary {
+      background: #EAF2FF;
+      color: var(--brand);
+    }
+
+    .calendar-shell {
+      width: 100%;
+      padding: 10px;
+      border-radius: 18px;
+      background: var(--soft);
+      border: 1px solid var(--line);
+    }
+
+    .calendar-shell iframe {
+      width: 100%;
+      min-height: 620px;
+      border: 0;
+      border-radius: 14px;
+      background: var(--white);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 520px) {
+      body {
+        padding: 0;
+        background: #FFFFFF;
+      }
+
+      .chatbox {
+        width: 100%;
+        height: 100vh;
+        min-height: 100vh;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+      }
+
+      .composer-row {
+        grid-template-columns: 1fr;
+      }
+
+      .composer-row button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <section class="chatbox" aria-label="Ad Snipper chatbot">
+    <div class="chat-header">
+      <div class="brand-row">
+        <div class="mark">AS</div>
+        <div>
+          <strong>Ad Snipper Assistant</strong>
+          <span>Ask about talent, pricing, onboarding, or booking</span>
+        </div>
+      </div>
+      <div class="status">
+        <span class="status-dot"></span>
+        <span>Online now</span>
+      </div>
+    </div>
+
+    <div class="messages" id="messages">
+      <div class="msg bot">Before we chat, please share a quick intro so our team can follow up properly.</div>
+    </div>
+
+    <form class="form" id="lead-form">
+      <input id="name" autocomplete="name" placeholder="Your full name" required />
+      <input id="email" autocomplete="email" type="email" placeholder="you@company.com" required />
+      <input id="whatsapp" autocomplete="tel" placeholder="+1 555 123 4567" required />
+      <button type="submit">Start chat</button>
+      <div class="muted">Your details are only used so the Ad Snipper team can follow up.</div>
+    </form>
+
+    <form class="composer hidden" id="chat-form">
+      <div class="composer-row">
+        <input id="message" autocomplete="off" placeholder="Ask about services, pricing, or hiring" />
+        <button type="submit">Send</button>
+      </div>
+    </form>
+  </section>
+
+  <script>
+    const messages = document.getElementById("messages");
+    const leadForm = document.getElementById("lead-form");
+    const chatForm = document.getElementById("chat-form");
+    const messageInput = document.getElementById("message");
+    const storageKey = "ad_snipper_session";
+
+    let conversationId = "";
+    let leadEmail = "";
+
+    function getSourcePage() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("source_page") || document.referrer || window.location.href;
+    }
+
+    function saveSession() {
+      localStorage.setItem(storageKey, JSON.stringify({ conversationId, leadEmail }));
+    }
+
+    function loadSession() {
+      const raw = localStorage.getItem(storageKey);
+      if (!raw) return;
+
+      try {
+        const parsed = JSON.parse(raw);
+        conversationId = parsed.conversationId || "";
+        leadEmail = parsed.leadEmail || "";
+      } catch (error) {
+        localStorage.removeItem(storageKey);
+      }
+    }
+
+    function addMessage(role, text) {
+      const el = document.createElement("div");
+      el.className = `msg ${role}`;
+      el.textContent = text;
+      messages.appendChild(el);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function addBookingButtons() {
+      const wrapper = document.createElement("div");
+      wrapper.className = "msg bot";
+      wrapper.innerHTML = `
+        <div class="cta-row">
+          <button class="cta-btn" type="button" data-booking-answer="yes">Show calendar</button>
+          <button class="cta-btn secondary" type="button" data-booking-answer="no">Not yet</button>
+        </div>
+      `;
+
+      wrapper.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-booking-answer]");
+        if (!button) return;
+
+        const answer = button.getAttribute("data-booking-answer") === "yes"
+          ? "Yes, show me the Discovery Call calendar."
+          : "Not yet, I have a few more questions first.";
+
+        wrapper.remove();
+        sendChatMessage(answer, false);
+      });
+
+      messages.appendChild(wrapper);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function renderCalendlyEmbed(url) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "msg bot";
+      wrapper.innerHTML = `
+        <div class="calendar-shell">
+          <iframe src="${url}" title="Schedule a Discovery Call"></iframe>
+        </div>
+      `;
+
+      messages.appendChild(wrapper);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    async function hydrateSession() {
+      if (!conversationId) return;
+
+      const response = await fetch(`/api/session/${conversationId}`);
+
+      if (!response.ok) {
+        localStorage.removeItem(storageKey);
+        conversationId = "";
+        leadEmail = "";
+        leadForm.classList.remove("hidden");
+        chatForm.classList.add("hidden");
+        return;
+      }
+
+      const data = await response.json();
+
+      leadForm.classList.add("hidden");
+      chatForm.classList.remove("hidden");
+      messages.innerHTML = "";
+
+      const deduped = [];
+
+      for (const message of data.messages || []) {
+        const previous = deduped[deduped.length - 1];
+
+        if (
+          previous &&
+          previous.role === message.role &&
+          previous.content === message.content
+        ) {
+          continue;
+        }
+
+        deduped.push(message);
+      }
+
+      if (!deduped.length) {
+        addMessage("bot", "Welcome back. How can we help today?");
+        return;
+      }
+
+      for (const message of deduped) {
+        addMessage(message.role === "assistant" ? "bot" : "user", message.content);
+      }
+    }
+
+    async function closeSession() {
+      if (!conversationId) return;
+      navigator.sendBeacon?.(`/api/session/${conversationId}/close`);
+    }
+
+    async function sendChatMessage(text, echoUser = true) {
+      if (!text || !conversationId) return;
+
+      if (echoUser) {
+        addMessage("user", text);
+      }
+
+      messageInput.value = "";
+      messageInput.disabled = true;
+
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          conversation_id: conversationId,
+          message: text,
+        }),
+      });
+
+      const data = await response.json();
+      messageInput.disabled = false;
+      messageInput.focus();
+
+      if (!response.ok) {
+        addMessage("bot", data.detail || "Something went wrong. Please try again.");
+        return;
+      }
+
+      addMessage("bot", data.reply);
+
+      if (data.should_offer_booking && !data.show_calendly_embed) {
+        addBookingButtons();
+      }
+
+      if (data.show_calendly_embed && data.calendly_embed_url) {
+        renderCalendlyEmbed(data.calendly_embed_url);
+      }
+    }
+
+    leadForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const submitButton = leadForm.querySelector("button");
+      submitButton.disabled = true;
+      submitButton.textContent = "Starting...";
+
+      const payload = {
+        name: document.getElementById("name").value,
+        email: document.getElementById("email").value,
+        whatsapp: document.getElementById("whatsapp").value,
+        source_page: getSourcePage(),
+        country: "Unknown",
+        device: window.innerWidth < 768 ? "Mobile" : "Desktop",
+      };
+
+      const response = await fetch("/api/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      submitButton.disabled = false;
+      submitButton.textContent = "Start chat";
+
+      if (!response.ok) {
+        addMessage("bot", data.detail || "We could not start the chat. Please check your details.");
+        return;
+      }
+
+      conversationId = data.conversation_id;
+      leadEmail = payload.email;
+      saveSession();
+
+      leadForm.classList.add("hidden");
+      chatForm.classList.remove("hidden");
+
+      addMessage("bot", `${data.first_name}, how can we help today?`);
+      messageInput.focus();
+    });
+
+    chatForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const text = messageInput.value.trim();
+      await sendChatMessage(text);
+    });
+
+    window.addEventListener("beforeunload", closeSession);
+
     loadSession();
     hydrateSession();
   </script>
