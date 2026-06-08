@@ -141,8 +141,9 @@ async def chat(request: Request, payload: ChatRequest) -> ChatResponse:
         and not session.booking_declined
         and not session.calendly_embed_shown
     )
-    offer_booking = can_offer_booking and (
-        should_offer_booking(payload.message, exchange_count) or exchange_count >= 6
+    offer_booking = can_offer_booking and should_offer_booking(
+        payload.message,
+        exchange_count,
     )
     booking_offer_created = False
 
@@ -166,16 +167,25 @@ async def chat(request: Request, payload: ChatRequest) -> ChatResponse:
         reply = "No problem. We can keep answering your questions here, and you can ask for the calendar whenever you are ready."
     else:
         company_context = knowledge_service.retrieve_context(payload.message)
-        fallback_reply = knowledge_service.build_context_answer(payload.message, company_context)
-        reply = openai_service.get_response(session.messages[-12:], company_context, fallback_reply)
+        fallback_reply = knowledge_service.build_context_answer(
+            payload.message,
+            company_context,
+        )
+        reply = openai_service.get_response(
+            session.messages[-12:],
+            company_context,
+            fallback_reply,
+        )
+
         if offer_booking:
             session.booking_offer_made = True
             session.awaiting_booking_confirmation = True
             booking_offer_created = True
             reply = (
                 f"{reply}\n\n"
-                "Sounds like a Discovery Call would be the fastest way to map this out for you. "
-                "Want me to pull up our 30-minute calendar inside the chat?"
+                "Sounds like a Discovery Call would be the fastest way to map "
+                "this out for you. Want me to pull up our 30-minute calendar "
+                "inside the chat?"
             )
 
     assistant_message = ChatMessage(role="assistant", content=reply)

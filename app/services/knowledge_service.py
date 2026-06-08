@@ -63,7 +63,13 @@
 #         if line.endswith(":") and not line.startswith("-"):
 #             if current_lines:
 #                 body = "\n".join(current_lines)
-#                 chunks.append(KnowledgeChunk(current_title, body, _tokenize(f"{current_title} {body}")))
+#                 chunks.append(
+#                     KnowledgeChunk(
+#                         current_title,
+#                         body,
+#                         _tokenize(f"{current_title} {body}"),
+#                     )
+#                 )
 #             current_title = line[:-1]
 #             current_lines = []
 #             continue
@@ -72,7 +78,13 @@
 
 #     if current_lines:
 #         body = "\n".join(current_lines)
-#         chunks.append(KnowledgeChunk(current_title, body, _tokenize(f"{current_title} {body}")))
+#         chunks.append(
+#             KnowledgeChunk(
+#                 current_title,
+#                 body,
+#                 _tokenize(f"{current_title} {body}"),
+#             )
+#         )
 
 #     return chunks
 
@@ -81,7 +93,7 @@
 
 
 # class KnowledgeService:
-#     def retrieve_context(self, question: str, max_chunks: int = 6) -> str:
+#     def retrieve_context(self, question: str, max_chunks: int = 4) -> str:
 #         query_tokens = _tokenize(question)
 #         if not query_tokens:
 #             return COMPANY_KNOWLEDGE_BASE
@@ -105,76 +117,148 @@
 #         lines = [line.strip() for line in context.splitlines() if line.strip()]
 #         content_lines = [line for line in lines if not line.endswith(":")]
 
+#         if "project" in lowered:
+#             return (
+#                 "Yes. We offer project-based work after reviewing your brief and estimating the hours, "
+#                 "timeline, and cost. It is billed 50% upfront and 50% on completion."
+#             )
+
+#         if any(word in lowered for word in ("fit", "replace", "replacement")):
+#             return (
+#                 "If the specialist is not the right fit or leaves, we provide a replacement within the "
+#                 "14-day replacement period at no extra cost."
+#             )
+
+#         if "white-label" in lowered or "white label" in lowered or "reseller" in lowered:
+#             return (
+#                 "Yes. We support white-label and reseller partnerships and offer partners a 15% discount "
+#                 "across packages."
+#             )
+
 #         if any(word in lowered for word in ("service", "provide", "offer")):
-#             services = [
+#             return (
+#                 "We provide dedicated AI Automation Specialists, Marketing Associates, Creative Associates, "
+#                 "and Virtual Assistants through project-based, part-time, full-time, or custom engagements."
+#             )
+
+#         if any(word in lowered for word in ("cost", "price", "pricing", "monthly", "budget", "much")):
+#             role_markers = (
+#                 ("automation", "AI Automation Specialist"),
+#                 ("marketing", "Marketing Associate"),
+#                 ("media buyer", "Marketing Associate"),
+#                 ("creative", "Creative Associate"),
+#                 ("designer", "Creative Associate"),
+#                 ("video editor", "Creative Associate"),
+#                 ("virtual assistant", "Virtual Assistant"),
+#                 (" va ", "Virtual Assistant"),
+#             )
+#             padded_question = f" {lowered} "
+
+#             for marker, role_name in role_markers:
+#                 if marker in padded_question:
+#                     matching = [
+#                         line
+#                         for line in content_lines
+#                         if line.startswith(f"{role_name}:")
+#                     ]
+#                     if matching:
+#                         return matching[0]
+
+#             pricing = [
 #                 line
 #                 for line in content_lines
-#                 if any(
-#                     marker in line.lower()
-#                     for marker in (
-#                         "ads",
-#                         "creative",
-#                         "virtual",
-#                         "sdr",
-#                         "automation",
-#                         "chatbot",
-#                         "video",
-#                         "design",
-#                         "crm",
-#                     )
-#                 )
-#                 and "$" not in line
+#                 if "$" in line or "pricing" in line.lower()
 #             ]
-#             if services:
-#                 return "We provide " + "; ".join(services[:8]) + "."
-
-#         if any(word in lowered for word in ("cost", "price", "pricing", "monthly", "budget")):
-#             pricing = [line for line in content_lines if "$" in line or "pricing" in line.lower()]
 #             if pricing:
-#                 return " ".join(pricing[:5])
+#                 return pricing[0]
+
+#         if "working hours" in lowered or "operating hours" in lowered or "timezone" in lowered:
+#             return (
+#                 "Our default hours are 6 PM to 2 AM Pakistan time, aligned with 9 AM to 5 PM US Eastern time. "
+#                 "We can also arrange timezone flexibility for other regions."
+#             )
 
 #         if any(word in lowered for word in ("different", "agency", "marketing agency")):
 #             differentiators = [
 #                 line
 #                 for line in content_lines
-#                 if any(marker in line.lower() for marker in ("not a typical", "inside", "extension", "dedicated"))
+#                 if any(
+#                     marker in line.lower()
+#                     for marker in (
+#                         "not a typical",
+#                         "inside",
+#                         "extension",
+#                         "dedicated",
+#                     )
+#                 )
 #             ]
 #             if differentiators:
-#                 return " ".join(differentiators[:4])
-
-#         if any(word in lowered for word in ("fit", "replace", "replacement")):
-#             replacements = [line for line in content_lines if "replace" in line.lower() or "fit" in line.lower()]
-#             if replacements:
-#                 return " ".join(replacements[:3])
+#                 return " ".join(differentiators[:2])
 
 #         if any(word in lowered for word in ("nda", "contract", "agreement", "legal")):
 #             legal = [
 #                 line
 #                 for line in content_lines
-#                 if any(marker in line.lower() for marker in ("nda", "agreement", "contract", "notice", "lock"))
+#                 if any(
+#                     marker in line.lower()
+#                     for marker in (
+#                         "nda",
+#                         "agreement",
+#                         "contract",
+#                         "notice",
+#                         "lock",
+#                     )
+#                 )
 #             ]
 #             if legal:
-#                 return " ".join(legal[:4])
+#                 return " ".join(legal[:2])
 
 #         if any(word in lowered for word in ("start", "onboard", "onboarding", "process")):
 #             process = [
 #                 line
 #                 for line in content_lines
-#                 if any(marker in line.lower() for marker in ("step", "start", "within", "candidate", "discovery"))
+#                 if any(
+#                     marker in line.lower()
+#                     for marker in (
+#                         "step",
+#                         "start",
+#                         "within",
+#                         "candidate",
+#                         "discovery",
+#                     )
+#                 )
 #             ]
 #             if process:
-#                 return " ".join(process[:5])
+#                 return " ".join(process[:3])
 
-#         if content_lines:
-#             return " ".join(content_lines[:4])
+#         query_tokens = _tokenize(question)
+#         ranked_lines = sorted(
+#             content_lines,
+#             key=lambda line: len(query_tokens.intersection(_tokenize(line))),
+#             reverse=True,
+#         )
+#         relevant_lines = [
+#             line
+#             for line in ranked_lines
+#             if query_tokens.intersection(_tokenize(line))
+#         ]
+
+#         if relevant_lines:
+#             return " ".join(relevant_lines[:2])
 
 #         return (
-#             "We can help with Ad Snipper services, pricing, onboarding, staffing fit, and Discovery Call booking."
+#             "We can help with Ad Snipper services, pricing, onboarding, "
+#             "staffing fit, and Discovery Call booking."
 #         )
 
 
+
+
+
+
+
+
 import re
-from dataclasses import dataclass
 
 from app.knowledge_base import COMPANY_KNOWLEDGE_BASE
 
@@ -213,117 +297,185 @@ STOP_WORDS = {
 }
 
 
-@dataclass(frozen=True)
-class KnowledgeChunk:
-    title: str
-    body: str
-    tokens: set[str]
-
-
 def _tokenize(text: str) -> set[str]:
     words = re.findall(r"[a-z0-9+]+", text.lower())
-    return {word for word in words if len(word) > 2 and word not in STOP_WORDS}
-
-
-def _build_chunks() -> list[KnowledgeChunk]:
-    chunks: list[KnowledgeChunk] = []
-    current_title = "Company overview"
-    current_lines: list[str] = []
-
-    for raw_line in COMPANY_KNOWLEDGE_BASE.strip().splitlines():
-        line = raw_line.strip()
-        if not line:
-            continue
-
-        if line.endswith(":") and not line.startswith("-"):
-            if current_lines:
-                body = "\n".join(current_lines)
-                chunks.append(
-                    KnowledgeChunk(
-                        current_title,
-                        body,
-                        _tokenize(f"{current_title} {body}"),
-                    )
-                )
-            current_title = line[:-1]
-            current_lines = []
-            continue
-
-        current_lines.append(line)
-
-    if current_lines:
-        body = "\n".join(current_lines)
-        chunks.append(
-            KnowledgeChunk(
-                current_title,
-                body,
-                _tokenize(f"{current_title} {body}"),
-            )
-        )
-
-    return chunks
-
-
-KNOWLEDGE_CHUNKS = _build_chunks()
+    return {
+        word
+        for word in words
+        if len(word) > 2 and word not in STOP_WORDS
+    }
 
 
 class KnowledgeService:
-    def retrieve_context(self, question: str, max_chunks: int = 4) -> str:
-        query_tokens = _tokenize(question)
-        if not query_tokens:
-            return COMPANY_KNOWLEDGE_BASE
-
-        scored: list[tuple[int, KnowledgeChunk]] = []
-        for chunk in KNOWLEDGE_CHUNKS:
-            overlap = len(query_tokens.intersection(chunk.tokens))
-            if overlap:
-                scored.append((overlap, chunk))
-
-        if not scored:
-            return COMPANY_KNOWLEDGE_BASE
-
-        scored.sort(key=lambda item: item[0], reverse=True)
-        selected = [chunk for _, chunk in scored[:max_chunks]]
-        sections = [f"{chunk.title}:\n{chunk.body}" for chunk in selected]
-        return "\n\n".join(sections)
+    def retrieve_context(self, question: str) -> str:
+        # OpenAI receives the complete approved public knowledge base so it can
+        # reason dynamically about differently worded and unexpected questions.
+        return COMPANY_KNOWLEDGE_BASE
 
     def build_context_answer(self, question: str, context: str) -> str:
-        lowered = question.lower()
-        lines = [line.strip() for line in context.splitlines() if line.strip()]
-        content_lines = [line for line in lines if not line.endswith(":")]
+        """
+        Builds a concise emergency fallback answer.
+
+        Normal chatbot questions are answered dynamically by OpenAI. These
+        answers are only used if OpenAI is unavailable or produces an
+        incomplete response.
+        """
+        lowered = " ".join(question.lower().split())
+        lines = [
+            line.strip()
+            for line in context.splitlines()
+            if line.strip()
+        ]
+        content_lines = [
+            line
+            for line in lines
+            if not line.endswith(":")
+        ]
+
+        if "what is ad snipper" in lowered or "tell me about ad snipper" in lowered:
+            return (
+                "Ad Snipper is a talent outsourcing and staff augmentation "
+                "company that places dedicated specialists with clients."
+            )
+
+        if any(
+            phrase in lowered
+            for phrase in (
+                "where are you based",
+                "your location",
+                "headquarters",
+            )
+        ):
+            return (
+                "We are headquartered in Karachi, Pakistan, and we also have "
+                "a US-registered entity."
+            )
+
+        if any(
+            phrase in lowered
+            for phrase in (
+                "how big is your team",
+                "team size",
+                "how many people",
+            )
+        ):
+            return "We have 35+ in-house specialists."
+
+        if "media buyer" in lowered and any(
+            word in lowered
+            for word in (
+                "cost",
+                "price",
+                "pricing",
+                "monthly",
+                "budget",
+                "much",
+                "rate",
+            )
+        ):
+            return (
+                "Media buyers cost $10 per hour, $800 per month part-time, "
+                "or $1,600 per month full-time."
+            )
+
+        if "media buyer" in lowered or "paid ads" in lowered:
+            return (
+                "Yes. Our media buyers manage Meta, Google, YouTube, TikTok, "
+                "LinkedIn, Pinterest, and programmatic advertising."
+            )
+
+        if "video editor" in lowered and any(
+            word in lowered
+            for word in ("hire", "just", "only", "provide", "offer")
+        ):
+            return (
+                "Yes. You can hire a dedicated Creative Associate specifically "
+                "for video editing."
+            )
+
+        if "voice receptionist" in lowered or "voice agent" in lowered:
+            return (
+                "Yes. Our AI Automation Specialists build AI receptionists "
+                "and voice agents using tools such as Retell, ElevenLabs, and Twilio."
+            )
+
+        if "what should i prepare" in lowered or "prepare for the call" in lowered:
+            return (
+                "Prepare a short overview of what you need, your current setup "
+                "and challenges, preferred engagement type, timezone, and "
+                "communication preference."
+            )
+
+        if (
+            "who will i be speaking with" in lowered
+            or "who will i speak with" in lowered
+        ):
+            return (
+                "You will normally speak with a co-founder or another "
+                "appropriate member of our team, depending on availability."
+            )
 
         if "project" in lowered:
             return (
-                "Yes. We offer project-based work after reviewing your brief and estimating the hours, "
-                "timeline, and cost. It is billed 50% upfront and 50% on completion."
+                "Yes. We offer project-based work after reviewing your brief "
+                "and estimating the hours, timeline, and cost. It is billed "
+                "50% upfront and 50% on completion."
             )
 
-        if any(word in lowered for word in ("fit", "replace", "replacement")):
+        if any(
+            word in lowered
+            for word in ("fit", "replace", "replacement")
+        ):
             return (
-                "If the specialist is not the right fit or leaves, we provide a replacement within the "
-                "14-day replacement period at no extra cost."
+                "If the specialist is not the right fit or leaves, we provide "
+                "a replacement within the 14-day replacement period at no extra cost."
             )
 
-        if "white-label" in lowered or "white label" in lowered or "reseller" in lowered:
+        if (
+            "white-label" in lowered
+            or "white label" in lowered
+            or "reseller" in lowered
+        ):
             return (
-                "Yes. We support white-label and reseller partnerships and offer partners a 15% discount "
-                "across packages."
+                "Yes. We support white-label and reseller partnerships and "
+                "offer partners a 15% discount across packages."
             )
 
-        if any(word in lowered for word in ("service", "provide", "offer")):
+        if "multiple placements" in lowered or "volume discount" in lowered:
             return (
-                "We provide dedicated AI Automation Specialists, Marketing Associates, Creative Associates, "
-                "and Virtual Assistants through project-based, part-time, full-time, or custom engagements."
+                "Our confirmed standard discount is 15% for white-label and "
+                "reseller partners. Discounts for multiple direct placements "
+                "need confirmation from our team."
             )
 
-        if any(word in lowered for word in ("cost", "price", "pricing", "monthly", "budget", "much")):
+        if "setup fee" in lowered or "recruitment fee" in lowered:
+            return (
+                "No. We do not charge setup, recruitment, or replacement fees."
+            )
+
+        if any(
+            phrase in lowered
+            for phrase in (
+                "per hour or per month",
+                "hourly or monthly",
+                "payment options",
+            )
+        ):
+            return (
+                "We offer hourly, part-time monthly, full-time monthly, and "
+                "project-based engagements."
+            )
+
+        if any(
+            word in lowered
+            for word in ("cost", "price", "pricing", "monthly", "budget", "much", "rate")
+        ):
             role_markers = (
                 ("automation", "AI Automation Specialist"),
                 ("marketing", "Marketing Associate"),
-                ("media buyer", "Marketing Associate"),
                 ("creative", "Creative Associate"),
                 ("designer", "Creative Associate"),
-                ("video editor", "Creative Associate"),
+                ("video editor", "Video Editor"),
                 ("virtual assistant", "Virtual Assistant"),
                 (" va ", "Virtual Assistant"),
             )
@@ -339,77 +491,80 @@ class KnowledgeService:
                     if matching:
                         return matching[0]
 
-            pricing = [
-                line
-                for line in content_lines
-                if "$" in line or "pricing" in line.lower()
-            ]
-            if pricing:
-                return pricing[0]
-
         if "working hours" in lowered or "operating hours" in lowered or "timezone" in lowered:
             return (
-                "Our default hours are 6 PM to 2 AM Pakistan time, aligned with 9 AM to 5 PM US Eastern time. "
-                "We can also arrange timezone flexibility for other regions."
+                "Our default hours are 6 PM to 2 AM Pakistan time, aligned "
+                "with 9 AM to 5 PM US Eastern time. We can also arrange "
+                "timezone flexibility for other regions."
             )
 
-        if any(word in lowered for word in ("different", "agency", "marketing agency")):
-            differentiators = [
-                line
-                for line in content_lines
-                if any(
-                    marker in line.lower()
-                    for marker in (
-                        "not a typical",
-                        "inside",
-                        "extension",
-                        "dedicated",
-                    )
-                )
-            ]
-            if differentiators:
-                return " ".join(differentiators[:2])
+        if any(
+            phrase in lowered
+            for phrase in (
+                "different from a marketing agency",
+                "different from an agency",
+            )
+        ):
+            return (
+                "Unlike a traditional agency, we place one dedicated specialist "
+                "who works directly with your team while we handle hiring, "
+                "training, and ongoing support."
+            )
 
-        if any(word in lowered for word in ("nda", "contract", "agreement", "legal")):
-            legal = [
-                line
-                for line in content_lines
-                if any(
-                    marker in line.lower()
-                    for marker in (
-                        "nda",
-                        "agreement",
-                        "contract",
-                        "notice",
-                        "lock",
-                    )
-                )
-            ]
-            if legal:
-                return " ".join(legal[:2])
+        if any(
+            word in lowered
+            for word in ("nda", "contract", "agreement", "legal")
+        ):
+            return (
+                "We sign NDAs and service agreements before work begins. "
+                "Staff-augmentation contracts are month-to-month with no "
+                "long-term commitment."
+            )
 
-        if any(word in lowered for word in ("start", "onboard", "onboarding", "process")):
-            process = [
-                line
-                for line in content_lines
-                if any(
-                    marker in line.lower()
-                    for marker in (
-                        "step",
-                        "start",
-                        "within",
-                        "candidate",
-                        "discovery",
-                    )
-                )
-            ]
-            if process:
-                return " ".join(process[:3])
+        if "how fast" in lowered or "start" in lowered:
+            return (
+                "We normally present 2 to 3 candidates within about 48 hours, "
+                "and the selected specialist typically starts within 5 to 7 "
+                "business days after contract signing."
+            )
+
+        if any(
+            word in lowered
+            for word in ("onboard", "onboarding", "process")
+        ):
+            return (
+                "We identify your needs, present suitable candidates, let you "
+                "interview and choose one, then complete the contract and onboarding."
+            )
+
+        if "manage" in lowered and any(
+            word in lowered
+            for word in ("directly", "you", "them")
+        ):
+            return (
+                "You manage the specialist day to day, while we handle hiring, "
+                "training, employment, timekeeping, support, feedback, and replacements."
+            )
+
+        if "case stud" in lowered or "portfolio" in lowered:
+            return (
+                "Yes. We can share relevant case studies and portfolios during "
+                "the sales process or Discovery Call."
+            )
+
+        if any(word in lowered for word in ("service", "services")):
+            return (
+                "We provide dedicated AI Automation Specialists, Marketing "
+                "Associates, Creative Associates, and Virtual Assistants through "
+                "project-based, part-time, full-time, or custom engagements."
+            )
 
         query_tokens = _tokenize(question)
         ranked_lines = sorted(
             content_lines,
-            key=lambda line: len(query_tokens.intersection(_tokenize(line))),
+            key=lambda line: len(
+                query_tokens.intersection(_tokenize(line))
+            ),
             reverse=True,
         )
         relevant_lines = [
@@ -422,6 +577,5 @@ class KnowledgeService:
             return " ".join(relevant_lines[:2])
 
         return (
-            "We can help with Ad Snipper services, pricing, onboarding, "
-            "staffing fit, and Discovery Call booking."
+            "I do not have that detail confirmed yet, but our team can clarify it."
         )
